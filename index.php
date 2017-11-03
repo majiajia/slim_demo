@@ -35,14 +35,12 @@
     $app->get('/hello/{name}',function (Request $request,Response $response) {
         $name = $request->getAttribute('name');
         $this->logger->addDebug("param:".$name);
-
-
         $response->getBody()->write($name);
 
         return $response;
     });
 
-    $this->get('/tickets',function (Request $request,Response $response){
+    $app->get('/tickets',function (Request $request,Response $response){
         $this->logger->addDebug("this is tickets api");
         $response->getBody()->write("");
         return $response;
