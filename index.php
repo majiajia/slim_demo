@@ -8,11 +8,17 @@
         "displayErrorDetails"=>true,
         "addContentLengthHeader"=>false,
         "db"=>[
+            'driver' => 'mysql',
             "host"=>"123.207.115.220",
-            "user"=>"zhongmeng",
-            "pass"=>"zhong1104",
-            "dbname"=>"xcx_meitu",
+            'database' => 'xcx_meitu',
+            'username' => 'zhongmeng',
+            'password' => 'zhong1104',
+            'charset'   => 'utf8',
+            'collation' => 'utf8_genernal_ci',
+            'prefix'    => '',
         ],
+        'determineRouteBeforeAppMiddleware' => true,
+
 //        "routerCacheFile"=>__DIR__."/route_cache.txt",
     ];
     $app = new \Slim\App(['settings'=>$config]);
@@ -24,7 +30,22 @@
         $logger->pushHandler($file_handle);
         return $logger;
     };
-
+    $container['errorHandler'] = function ($c) {
+        return function (Request $request,Response $response,\Exception $exception) use($c) {
+            return $c['response']->withStatus(500)
+                ->withHeader('Content-Type', 'text/html')
+                ->write('Something went wrong!');
+        };
+    };
+    $container['db'] = function ($container) {
+        $capsule = new \Illuminate\Database\Capsule\Manager();
+        $capsule->addConnection($container['settings']['db']);
+        $capsule->setAsGlobal();
+        $capsule->bootEloquent();
+        return $capsule;
+    };
+    /*
+     * it show how to use mysql
     $container["db"] = function ($c) {
         $db = $c["settings"]["db"];
         $pdo = new PDO("mysql:host=".$db["host"].";dbname=".$db["dbname"],$db["user"],$db["pass"]);
@@ -32,7 +53,7 @@
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
         return $pdo;
     };
-
+    */
     $mw = function (Request $request,Response $response,$next) {
         $response->getBody()->write("  before  ");
         $response = $next($request,$response);
@@ -119,5 +140,12 @@
         return $response;
     });
 
-    
+    $app->map(['GET','POST'],'/students',function (Request $request,Response $response){
+        $this->get('cookies')->set('name',[
+            'value' => 'john',
+            'expires' => '7 days'
+        ]);
+
+    });
+    $app->get('/school',\SchoolAction::class);
     $app->run();
