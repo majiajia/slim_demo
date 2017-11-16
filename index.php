@@ -39,7 +39,19 @@
         $response->getBody()->write("  after  ");
         return $response;
     };
-
+    $app->add(function (Request $req,Response $res,$next){
+        $req->registerMediaTypeParser(
+            'text/javascript',
+            function ($input){
+                return json_decode($input,true);
+            }
+        );
+        return $next($req,$res);
+    });
+    $app->add(function (Request $req,Response $res,$next){
+        $req = $req->withAttribute('name',rand(1,10000));
+        return $next($req,$res);
+    });
     $app->get('/hello/{name}',function (Request $request,Response $response) {
         $name = $request->getAttribute('name');
         $this->logger->addDebug("param:".$name);
@@ -57,11 +69,11 @@
         $response->getBody()->write("");
         return $response;
     });
-$app->get('/tickets1',function (Request $request,Response $response){
-    $this->logger->addDebug("this is tickets api");
-    $response->getBody()->write("");
-    return $response;
-});
+    $app->get('/tickets1',function (Request $request,Response $response){
+        $this->logger->addDebug("this is tickets api");
+        $response->getBody()->write("");
+        return $response;
+    });
     $app->group('/utils',function () use ($app){
 //        http://127.0.0.1/slim_demo/index.php/utils/date
         $app->get('/date',function (Request $req,Response $res){
@@ -85,6 +97,8 @@ $app->get('/tickets1',function (Request $request,Response $response){
         return $res;
     });
     $app->get("/test_json",function (Request $req,Response $res){
+        $req->getParsedBody();
+
         $data = [
             'status'=>'1',
             'msg'=>'',
@@ -96,4 +110,14 @@ $app->get('/tickets1',function (Request $request,Response $response){
         $res = $res->withJson($data);
         return $res;
     });
+    $app->get('/test_attr',function (Request $request,Response $response){
+        $data = [
+            'name'=>'jack',
+            'age'=>'16',
+        ];
+        $response = $response->withjson($data,200);
+        return $response;
+    });
+
+    
     $app->run();
